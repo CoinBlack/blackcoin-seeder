@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <unistd.h>
 
 #include "bitcoin.h"
 #include "db.h"
@@ -20,6 +21,7 @@ public:
   int nThreads;
   int nPort;
   int nDnsThreads;
+  int fDaemon;
   int fUseTestNet;
   int fWipeBan;
   int fWipeIgnore;
@@ -28,7 +30,7 @@ public:
   const char *host;
   const char *tor;
 
-  CDnsSeedOpts() : nThreads(96), nDnsThreads(4), nPort(53), mbox(NULL), ns(NULL), host(NULL), tor(NULL), fUseTestNet(false), fWipeBan(false), fWipeIgnore(false) {}
+  CDnsSeedOpts() : nThreads(96), nDnsThreads(4), nPort(53), mbox(NULL), ns(NULL), host(NULL), tor(NULL), fDaemon(false), fUseTestNet(false), fWipeBan(false), fWipeIgnore(false) {}
 
   void ParseCommandLine(int argc, char **argv) {
     static const char *help = "BlackCoin-seeder\n"
@@ -42,6 +44,7 @@ public:
                               "-d <threads>    Number of DNS server threads (default 4)\n"
                               "-p <port>       UDP port to listen on (default 53)\n"
                               "-o <ip:port>    Tor proxy IP/Port\n"
+                              "--daemon        Run as a daemon\n"
                               "--testnet       Use testnet\n"
                               "--wipeban       Wipe list of banned nodes\n"
                               "--wipeignore    Wipe list of ignored nodes\n"
@@ -58,6 +61,7 @@ public:
         {"dnsthreads", required_argument, 0, 'd'},
         {"port", required_argument, 0, 'p'},
         {"onion", required_argument, 0, 'o'},
+        {"daemon", no_argument, &fDaemon, 1},
         {"testnet", no_argument, &fUseTestNet, 1},
         {"wipeban", no_argument, &fWipeBan, 1},
         {"wipeignore", no_argument, &fWipeBan, 1},
@@ -388,6 +392,12 @@ int main(int argc, char **argv) {
   if (fDNS && !opts.host) {
     fprintf(stderr, "No hostname set. Please use -h.\n");
     exit(1);
+  }
+  if (opts.fDaemon) {
+    if (daemon(1, 0) == -1) {
+      perror("daemon");
+      exit(1);
+    }
   }
   FILE *f = fopen("dnsseed.dat","r");
   if (f) {
