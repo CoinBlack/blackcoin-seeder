@@ -343,13 +343,14 @@ extern "C" void* ThreadStats(void*) {
   } while(1);
 }
 
-static const string mainnet_seeds[] = {"seed.blackcoin.co", "seed2.blackcoin.co", ""};
+static const string mainnet_seeds[] = {"seed.blackcoin.co", "foxy.seeds.darkfox.id.au", ""};
 static const string testnet_seeds[] = {""};
 static const string *seeds = mainnet_seeds;
 
 extern "C" void* ThreadSeeder(void*) {
   if (!fTestNet){
     db.Add(CService("198.52.200.75", 15714, false), true);
+    db.Add(CService("2001:41d0:2:7438::1", 15714, false), true);
   }
   do {
     for (int i=0; seeds[i] != ""; i++) {
