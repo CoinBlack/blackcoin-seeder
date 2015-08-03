@@ -29,8 +29,10 @@ public:
   const char *ns;
   const char *host;
   const char *tor;
+  const char *ipv4_proxy;
+  const char *ipv6_proxy;
 
-  CDnsSeedOpts() : nThreads(96), nDnsThreads(4), nPort(53), mbox(NULL), ns(NULL), host(NULL), tor(NULL), fDaemon(false), fUseTestNet(false), fWipeBan(false), fWipeIgnore(false) {}
+  CDnsSeedOpts() : nThreads(96), nDnsThreads(4), nPort(53), mbox(NULL), ns(NULL), host(NULL), tor(NULL), fDaemon(false), fUseTestNet(false), fWipeBan(false), fWipeIgnore(false), ipv4_proxy(NULL), ipv6_proxy(NULL) {}
 
   void ParseCommandLine(int argc, char **argv) {
     static const char *help = "BlackCoin-seeder\n"
@@ -44,6 +46,8 @@ public:
                               "-d <threads>    Number of DNS server threads (default 4)\n"
                               "-p <port>       UDP port to listen on (default 53)\n"
                               "-o <ip:port>    Tor proxy IP/Port\n"
+                              "-i <ip:port>    IPV4 SOCKS5 proxy IP/Port\n"
+                              "-k <ip:port>    IPV6 SOCKS5 proxy IP/Port\n"
                               "--daemon        Run as a daemon\n"
                               "--testnet       Use testnet\n"
                               "--wipeban       Wipe list of banned nodes\n"
@@ -61,6 +65,8 @@ public:
         {"dnsthreads", required_argument, 0, 'd'},
         {"port", required_argument, 0, 'p'},
         {"onion", required_argument, 0, 'o'},
+        {"proxyipv4", required_argument, 0, 'i'},
+        {"proxyipv6", required_argument, 0, 'k'},
         {"daemon", no_argument, &fDaemon, 1},
         {"testnet", no_argument, &fUseTestNet, 1},
         {"wipeban", no_argument, &fWipeBan, 1},
@@ -69,7 +75,7 @@ public:
         {0, 0, 0, 0}
       };
       int option_index = 0;
-      int c = getopt_long(argc, argv, "h:n:m:t:p:d:o:", long_options, &option_index);
+      int c = getopt_long(argc, argv, "h:n:m:t:p:d:o:i:k:", long_options, &option_index);
       if (c == -1) break;
       switch (c) {
         case 'h': {
@@ -104,9 +110,19 @@ public:
           if (p > 0 && p < 65536) nPort = p;
           break;
         }
-        
+
         case 'o': {
           tor = optarg;
+          break;
+        }
+
+        case 'i': {
+          ipv4_proxy = optarg;
+          break;
+        }
+
+        case 'k': {
+          ipv6_proxy = optarg;
           break;
         }
 
@@ -192,14 +208,12 @@ public:
           memcpy(&a.data.v4, &addr, 4);
           cache.push_back(a);
           nIPv4++;
-#ifdef USE_IPV6
         } else if ((*it).GetIn6Addr(&addr6)) {
           addr_t a;
           a.v = 6;
           memcpy(&a.data.v6, &addr6, 16);
           cache.push_back(a);
           nIPv6++;
-#endif
         }
       }
       cacheHits = 0;
@@ -374,6 +388,20 @@ int main(int argc, char **argv) {
     if (service.IsValid()) {
       printf("Using Tor proxy at %s\n", service.ToStringIPPort().c_str());
       SetProxy(NET_TOR, service);
+    }
+  }
+  if (opts.ipv4_proxy) {
+    CService service(opts.ipv4_proxy, 9050);
+    if (service.IsValid()) {
+      printf("Using IPv4 proxy at %s\n", service.ToStringIPPort().c_str());
+      SetProxy(NET_IPV4, service);
+    }
+  }
+  if (opts.ipv6_proxy) {
+    CService service(opts.ipv6_proxy, 9050);
+    if (service.IsValid()) {
+      printf("Using IPv6 proxy at %s\n", service.ToStringIPPort().c_str());
+      SetProxy(NET_IPV6, service);
     }
   }
   bool fDNS = true;

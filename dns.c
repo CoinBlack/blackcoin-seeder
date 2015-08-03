@@ -18,18 +18,18 @@
 
 #if defined IP_RECVDSTADDR
 # define DSTADDR_SOCKOPT IP_RECVDSTADDR
-# define DSTADDR_DATASIZE (CMSG_SPACE(sizeof(struct in_addr)))
+# define DSTADDR_DATASIZE (CMSG_SPACE(sizeof(struct in6_addr)))
 # define dstaddr(x) (CMSG_DATA(x))
-#elif defined IP_PKTINFO
-struct in_pktinfo {
-  unsigned int   ipi_ifindex;  /* Interface index */
-  struct in_addr ipi_spec_dst; /* Local address */
-  struct in_addr ipi_addr;     /* Header Destination address */
-};
+#elif defined IPV6_PKTINFO
+struct in6_pktinfo
+  {
+    struct in6_addr ipi6_addr;	/* src/dst IPv6 address */
+    unsigned int ipi6_ifindex;	/* send/recv interface index */
+  };
 
-# define DSTADDR_SOCKOPT IP_PKTINFO
-# define DSTADDR_DATASIZE (CMSG_SPACE(sizeof(struct in_pktinfo)))
-# define dstaddr(x) (&(((struct in_pktinfo *)(CMSG_DATA(x)))->ipi_addr))
+# define DSTADDR_SOCKOPT IPV6_PKTINFO
+# define DSTADDR_DATASIZE (CMSG_SPACE(sizeof(struct in6_pktinfo)))
+# define dstaddr(x) (&(((struct in6_pktinfo *)(CMSG_DATA(x)))->ipi6_addr))
 #else
 # error "can't determine socket option"
 #endif
@@ -83,9 +83,9 @@ int static parse_name(const unsigned char **inpos, const unsigned char *inend, c
       if (*inpos == inend)
         return -1;
       int ref = ((octet - 0xC0) << 8) + *((*inpos)++);
-      if (ref < 0 || ref >= (*inpos)-inbuf) return -1;
+      if (ref < 0 || ref >= (*inpos)-inbuf-2) return -1;
       const unsigned char *newbuf = inbuf + ref;
-      return parse_name(&newbuf, *inpos, inbuf, buf+bufused, bufsize-bufused);
+      return parse_name(&newbuf, (*inpos) - 2, inbuf, buf+bufused, bufsize-bufused);
     }
     if (octet > 63) return -1;
     // copy label
@@ -287,18 +287,23 @@ ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insi
   unsigned char *outpos = outbuf+(inpos-inbuf);
   unsigned char *outend = outbuf + BUFLEN;
   
-  // printf("DNS: Request host='%s' type=%i class=%i\n", name, typ, cls);
+//   printf("DNS: Request host='%s' type=%i class=%i\n", name, typ, cls);
   
-  // calculate size of authority section
+  // calculate max size of authority section
   
-  int auth_size = 0;
+  int max_auth_size = 0;
   
   if (!((typ == TYPE_NS || typ == QTYPE_ANY) && (cls == CLASS_IN || cls == QCLASS_ANY))) {
-    // authority section will be necessary
-    unsigned char *oldpos = outpos;
-    write_record_ns(&oldpos, outend, "", offset, CLASS_IN, 0, opt->ns);
-    auth_size = oldpos - outpos;
-//    printf("Authority section will claim %i bytes\n", auth_size);
+    // authority section will be necessary, either NS or SOA
+    unsigned char *newpos = outpos;
+    write_record_ns(&newpos, outend, "", offset, CLASS_IN, 0, opt->ns);
+    max_auth_size = newpos - outpos;
+
+    newpos = outpos;
+    write_record_soa(&newpos, outend, "", offset, CLASS_IN, opt->nsttl, opt->ns, opt->mbox, time(NULL), 604800, 86400, 2592000, 604800);
+    if (max_auth_size < newpos - outpos)
+        max_auth_size = newpos - outpos;
+//    printf("Authority section will claim %i bytes max\n", max_auth_size);
   }
   
   // Answer section
@@ -307,14 +312,14 @@ ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insi
 
   // NS records
   if ((typ == TYPE_NS || typ == QTYPE_ANY) && (cls == CLASS_IN || cls == QCLASS_ANY)) {
-    int ret2 = write_record_ns(&outpos, outend - auth_size, "", offset, CLASS_IN, opt->nsttl, opt->ns);
+    int ret2 = write_record_ns(&outpos, outend - max_auth_size, "", offset, CLASS_IN, opt->nsttl, opt->ns);
 //    printf("wrote NS record: %i\n", ret2);
     if (!ret2) { outbuf[7]++; have_ns++; }
   }
 
   // SOA records
   if ((typ == TYPE_SOA || typ == QTYPE_ANY) && (cls == CLASS_IN || cls == QCLASS_ANY) && opt->mbox) {
-    int ret2 = write_record_soa(&outpos, outend - auth_size, "", offset, CLASS_IN, opt->nsttl, opt->ns, opt->mbox, time(NULL), 604800, 86400, 2592000, 604800);
+    int ret2 = write_record_soa(&outpos, outend - max_auth_size, "", offset, CLASS_IN, opt->nsttl, opt->ns, opt->mbox, time(NULL), 604800, 86400, 2592000, 604800);
 //    printf("wrote SOA record: %i\n", ret2);
     if (!ret2) { outbuf[7]++; }
   }
@@ -327,9 +332,9 @@ ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insi
     while (n < naddr) {
       int ret = 1;
       if (addr[n].v == 4)
-         ret = write_record_a(&outpos, outend - auth_size, "", offset, CLASS_IN, opt->datattl, &addr[n]);
+         ret = write_record_a(&outpos, outend - max_auth_size, "", offset, CLASS_IN, opt->datattl, &addr[n]);
       else if (addr[n].v == 6)
-         ret = write_record_aaaa(&outpos, outend - auth_size, "", offset, CLASS_IN, opt->datattl, &addr[n]);
+         ret = write_record_aaaa(&outpos, outend - max_auth_size, "", offset, CLASS_IN, opt->datattl, &addr[n]);
 //      printf("wrote A record: %i\n", ret);
       if (!ret) {
         n++;
@@ -340,12 +345,21 @@ ssize_t static dnshandle(dns_opt_t *opt, const unsigned char *inbuf, size_t insi
   }
   
   // Authority section
-  if (!have_ns) {
+  if (!have_ns && outbuf[7]) {
     int ret2 = write_record_ns(&outpos, outend, "", offset, CLASS_IN, opt->nsttl, opt->ns);
 //    printf("wrote NS record: %i\n", ret2);
     if (!ret2) {
       outbuf[9]++;
     }
+  }
+  else if (!outbuf[7]) {
+    // Didn't include any answers, so reply with SOA as this is a negative
+    // response. If we replied with NS above we'd create a bad horizontal
+    // referral loop, as the NS response indicates where the resolver should
+    // try next.
+    int ret2 = write_record_soa(&outpos, outend, "", offset, CLASS_IN, opt->nsttl, opt->ns, opt->mbox, time(NULL), 604800, 86400, 2592000, 604800);
+//    printf("wrote SOA record: %i\n", ret2);
+    if (!ret2) { outbuf[9]++; }
   }
   
   // set AA
@@ -366,31 +380,31 @@ error:
 static int listenSocket = -1;
 
 int dnsserver(dns_opt_t *opt) {
-  struct sockaddr_in si_other;
+  struct sockaddr_in6 si_other;
   int senderSocket = -1;
-  senderSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  senderSocket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
   if (senderSocket == -1) 
     return -3;
 
   int replySocket;
   if (listenSocket == -1) {
-    struct sockaddr_in si_me;
-    if ((listenSocket=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1) {
+    struct sockaddr_in6 si_me;
+    if ((listenSocket=socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP))==-1) {
       listenSocket = -1;
       return -1;
     }
-    replySocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    replySocket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (replySocket == -1)
     {
       close(listenSocket);
       return -1;
     }
     int sockopt = 1;
-    setsockopt(listenSocket, IPPROTO_IP, DSTADDR_SOCKOPT, &sockopt, sizeof sockopt);
+    setsockopt(listenSocket, IPPROTO_IPV6, DSTADDR_SOCKOPT, &sockopt, sizeof sockopt);
     memset((char *) &si_me, 0, sizeof(si_me));
-    si_me.sin_family = AF_INET;
-    si_me.sin_port = htons(opt->port);
-    si_me.sin_addr.s_addr = INADDR_ANY;
+    si_me.sin6_family = AF_INET6;
+    si_me.sin6_port = htons(opt->port);
+    si_me.sin6_addr = in6addr_any;
     if (bind(listenSocket, (struct sockaddr*)&si_me, sizeof(si_me))==-1)
       return -2;
   }
@@ -414,7 +428,7 @@ int dnsserver(dns_opt_t *opt) {
   for (; 1; ++(opt->nRequests))
   {
     ssize_t insize = recvmsg(listenSocket, &msg, 0);
-    unsigned char *addr = (unsigned char*)&si_other.sin_addr.s_addr;
+//    unsigned char *addr = (unsigned char*)&si_other.sin_addr.s_addr;
 //    printf("DNS: Request %llu from %i.%i.%i.%i:%i of %i bytes\n", (unsigned long long)(opt->nRequests), addr[0], addr[1], addr[2], addr[3], ntohs(si_other.sin_port), (int)insize);
     if (insize <= 0)
       continue;
