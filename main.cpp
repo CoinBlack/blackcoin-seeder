@@ -357,7 +357,7 @@ extern "C" void* ThreadStats(void*) {
   } while(1);
 }
 
-static const string mainnet_seeds[] = {"seed.blackcoin.co", "foxy.seeds.darkfox.id.au", ""};
+static const string mainnet_seeds[] = {"seed.blackcoin.co", "bcseed.syllabear.us.to", ""};
 static const string testnet_seeds[] = {""};
 static const string *seeds = mainnet_seeds;
 
