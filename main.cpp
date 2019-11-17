@@ -357,14 +357,14 @@ extern "C" void* ThreadStats(void*) {
   } while(1);
 }
 
-static const string mainnet_seeds[] = {"dnsseed.vasin.nl", "testnet.blackcoin.nl", ""};
+static const string mainnet_seeds[] = {"dnsseed.blackcoin.nl", "dnsseed.vasin.nl", ""};
 static const string testnet_seeds[] = {""};
 static const string *seeds = mainnet_seeds;
 
-extern "C" void* ThreadSeeder(void*) {
-  if (!fTestNet){
-    db.Add(CService("69.30.221.82", 19001, false), true);
-    db.Add(CService("2607:fea8:3ca0:926::2", 15714, false), true);
+extern "C" void* ThreadSeeder(void*)
+{
+  if (!fTestNet)
+  {
     db.Add(CService("54ktu5wby3agev2d.onion", 15714), true);
     db.Add(CService("pqlf5ov3xzkqj3lt.onion", 15714), true);
   }
