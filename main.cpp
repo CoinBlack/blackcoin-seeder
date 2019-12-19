@@ -404,11 +404,11 @@ extern "C" void* ThreadStats(void*) {
   return nullptr;
 }
 
-static const string mainnet_seeds[] = {"dnsseed.blackcoin.nl", "dnsseed.vasin.nl", ""};
+static const string mainnet_seeds[] = {"ghost.blackcoin.nl", "node.blackcoin.io", "dnsseed.blackcoin.nl", "dns.blackcoin.nl", ""};
 static const string testnet_seeds[] = {""};
 static const string *seeds = mainnet_seeds;
 
-extern "C" void* ThreadSeeder(void*)
+extern "C" void *ThreadSeeder(void *)
 {
   if (!fTestNet)
   {
