@@ -404,15 +404,15 @@ extern "C" void* ThreadStats(void*) {
   return nullptr;
 }
 
-static const string mainnet_seeds[] = {"ghost.blackcoin.nl", "node.blackcoin.io", "dnsseed.blackcoin.nl", "dns.blackcoin.nl", ""};
-static const string testnet_seeds[] = {""};
+static const string mainnet_seeds[] = {"ghost.blackcoin.nl", "node.blackcoin.io", "dnsseed.blackcoin.nl", "dns.blackcoin.nl", "vps.blackcoin.nl", ""};
+static const string testnet_seeds[] = {"ghost.blackcoin.nl"};
 static const string *seeds = mainnet_seeds;
 
 extern "C" void *ThreadSeeder(void *)
 {
   if (!fTestNet)
   {
-    db.Add(CService("54ktu5wby3agev2d.onion", 15714), true);
+    db.Add(CService("gcf5kl6mpben4jjl72yu53h7ek3c7k7i6oasuqpkzmsyxk3qaxr7fsid.onion", 15714), true);
     db.Add(CService("pqlf5ov3xzkqj3lt.onion", 15714), true);
   }
   do {
