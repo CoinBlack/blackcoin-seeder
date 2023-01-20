@@ -421,7 +421,7 @@ extern "C" void* ThreadStats(void*) {
   return nullptr;
 }
 
-static const string mainnet_seeds[] = {"ghost.blackcoin.nl", "node.blackcoin.io", "dnsseed.blackcoin.nl", "dnsseed2.blackcoin.nl", "node.blackcoin.nl", "vps.blackcoin.nl", ""};
+static const string mainnet_seeds[] = {"ghost.blackcoin.nl", "dns.blackcoin.nl", "dnsseed.blackcoin.nl", "dnsseed2.blackcoin.nl", "node.blackcoin.nl", "vps.blackcoin.nl", ""};
 static const string testnet_seeds[] = {"ghost.blackcoin.nl", "dns.blackcoin.nl", ""};
 static const string *seeds = mainnet_seeds;
 
