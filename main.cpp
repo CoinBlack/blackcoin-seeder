@@ -421,8 +421,8 @@ extern "C" void* ThreadStats(void*) {
   return nullptr;
 }
 
-static const string mainnet_seeds[] = {"electrum1.blackcoin.nl", "electrum2.blackcoin.nl", "electrum3.blackcoin.nl", "stlouis.blackcoin.nl", "seattle.blackcoin.nl", "newyork.blackcoin.nl", ""};
-static const string testnet_seeds[] = {"electrum1.blackcoin.nl", "newyork.blackcoin.nl", ""};
+static const string mainnet_seeds[] = {"electrum1.blackcoin.nl", "electrum2.blackcoin.nl", "electrum3.blackcoin.nl", "vps.blackcoin.nl", "node.blackcoin.nl", "dns.blackcoin.nl", ""};
+static const string testnet_seeds[] = {"electrum1.blackcoin.nl", "vps.blackcoin.nl", ""};
 static const string *seeds = mainnet_seeds;
 
 extern "C" void *ThreadSeeder(void *)
