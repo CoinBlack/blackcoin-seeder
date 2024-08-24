@@ -465,7 +465,7 @@ extern "C" void* ThreadStats(void*) {
   return nullptr;
 }
 
-static const string mainnet_seeds[] = {"electrum1.blackcoin.nl", "electrum2.blackcoin.nl", "electrum3.blackcoin.nl", "vps.blackcoin.nl", "v26blk1.blackcoin.nl", "7mkmjmjobsejl4t34toeugay3llnkqitdachsv3qpkum6zc4c34p5uyd.onion", ""};
+static const string mainnet_seeds[] = {"electrum1.blackcoin.nl", "electrum2.blackcoin.nl", "electrum3.blackcoin.nl", "vps.blackcoin.nl", "v26blk1.blackcoin.nl", "2mzhm7vwjwzhamc3g5fllu3peh3n3exo2pdbumksjzacu6fwmbixkhyd.onion", ""};
 static const string testnet_seeds[] = {"electrum1.blackcoin.nl",
                                        "electrum2.blackcoin.nl",
                                        "electrum3.blackcoin.nl",
