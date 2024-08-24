@@ -14,9 +14,10 @@
 
 #define REQUIRE_VERSION 70015
 
+extern int nMinimumHeight;
 static inline int GetRequireHeight(const bool testnet = fTestNet)
 {
-    return testnet ? 1455000 : 4525000;
+    return nMinimumHeight ? nMinimumHeight : (testnet ? 1993300 : 5066166);
 }
 
 std::string static inline ToString(const CService &ip) {

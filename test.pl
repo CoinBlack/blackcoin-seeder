@@ -18,7 +18,7 @@ sub go {
   my $sock = IO::Socket::INET->new(
     Proto    => 'udp',
     PeerPort => 53,
-    PeerAddr => "dns.blackcoin.nl",
+    PeerAddr => "blk1.blackcoin.nl",
   ) or die "Could not create socket: $!\n";
 
   while($run) {

@@ -22,6 +22,8 @@ static const char* ppszTypeName[] =
     "block",
 };
 
+unsigned short nDefaultP2Port = 0;
+
 unsigned char pchMessageStart[4] = { 0x70, 0x35, 0x22, 0x05 };
 
 CMessageHeader::CMessageHeader()
