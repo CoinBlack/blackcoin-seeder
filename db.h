@@ -12,12 +12,12 @@
 
 #define MIN_RETRY 1000
 
-#define REQUIRE_VERSION 70015
+#define REQUIRE_VERSION 70016
 
 extern int nMinimumHeight;
 static inline int GetRequireHeight(const bool testnet = fTestNet)
 {
-    return nMinimumHeight ? nMinimumHeight : (testnet ? 1993300 : 5066166);
+    return nMinimumHeight ? nMinimumHeight : (testnet ? 2034700 : 5109800);
 }
 
 std::string static inline ToString(const CService &ip) {
