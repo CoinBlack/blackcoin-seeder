@@ -2,3 +2,6 @@
 *.o
 dnsseed*
 dnsstats.log
+.workspace
+AGENTS.md
+
