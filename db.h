@@ -102,7 +102,11 @@ public:
   }
   
   bool IsGood() const {
-    if (ip.GetPort() != GetDefaultPort()) return false;
+    if (!fTestNet) {
+      if (ip.GetPort() != 15714 && ip.GetPort() != 9015) return false;
+    } else {
+      if (ip.GetPort() != GetDefaultPort()) return false;
+    }
     if (!(services & NODE_NETWORK)) return false;
     if (services & ~KNOWN_SERVICE_MASK) return false;
     if (!ip.IsRoutable()) return false;
