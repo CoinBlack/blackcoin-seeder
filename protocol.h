@@ -68,6 +68,9 @@ enum
     NODE_P2P_V2 = (1 << 11),
 };
 
+#define KNOWN_SERVICE_MASK \
+    ((uint64_t)(NODE_NETWORK | NODE_BLOOM | NODE_WITNESS | NODE_COMPACT_FILTERS | NODE_NETWORK_LIMITED | NODE_P2P_V2))
+
 class CAddress : public CService
 {
     public:

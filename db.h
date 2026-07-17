@@ -17,7 +17,7 @@
 extern int nMinimumHeight;
 static inline int GetRequireHeight(const bool testnet = fTestNet)
 {
-    return nMinimumHeight ? nMinimumHeight : (testnet ? 2139564 : 5805000);
+    return nMinimumHeight ? nMinimumHeight : (testnet ? 2880000 : 5956000);
 }
 
 std::string static inline ToString(const CService &ip) {
@@ -104,6 +104,7 @@ public:
   bool IsGood() const {
     if (ip.GetPort() != GetDefaultPort()) return false;
     if (!(services & NODE_NETWORK)) return false;
+    if (services & ~KNOWN_SERVICE_MASK) return false;
     if (!ip.IsRoutable()) return false;
     if (clientVersion && clientVersion < REQUIRE_VERSION) return false;
     if (blocks && blocks < GetRequireHeight()) return false;

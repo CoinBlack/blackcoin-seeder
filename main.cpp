@@ -465,13 +465,11 @@ extern "C" void* ThreadStats(void*) {
   return nullptr;
 }
 
-static const string mainnet_seeds[] = {"dnsseed.blackcoin.nl", "dnsseed2.blackcoin.nl", "electrum1.blackcoin.nl", "electrum2.blackcoin.nl", "blk1brasil.blackcoin.nl", "blk2brasil.blackcoin.nl", ""};
+static const string mainnet_seeds[] = {"dnsseed.blackcoin.nl", "dnsseed2.blackcoin.nl", "electrum1.blackcoin.nl", "electrum2.blackcoin.nl", ""};
 static const string testnet_seeds[] = {"dnsseed.blackcoin.nl",
                                         "dnsseed2.blackcoin.nl",
                                         "electrum1.blackcoin.nl",
                                         "electrum2.blackcoin.nl",
-                                        "blk1brasil.blackcoin.nl",
-                                        "blk2brasil.blackcoin.nl",
                                         ""};
 static const string *seeds = mainnet_seeds;
 static vector<string> vSeeds;
